@@ -12,9 +12,16 @@ import (
 	"github.com/hashicorp/memberlist"
 )
 
+type UserDelegate interface {
+	LocalState(join bool) []byte
+	MergeRemoteState(buf []byte, isJoin bool)
+}
+
 // delegate is the memberlist.Delegate implementation that Serf uses.
 type delegate struct {
 	serf *Serf
+
+	user UserDelegate
 }
 
 var _ memberlist.Delegate = &delegate{}
@@ -179,6 +186,11 @@ func (d *delegate) LocalState(join bool) []byte {
 	d.serf.eventLock.RLock()
 	defer d.serf.eventLock.RUnlock()
 
+	var userState []byte
+	if d.user != nil {
+		userState = d.user.LocalState(join)
+	}
+
 	// Create the message to send
 	pp := messagePushPull{
 		LTime:        d.serf.clock.Time(),
@@ -187,6 +199,7 @@ func (d *delegate) LocalState(join bool) []byte {
 		EventLTime:   d.serf.eventClock.Time(),
 		Events:       d.serf.eventBuffer,
 		QueryLTime:   d.serf.queryClock.Time(),
+		UserState:    userState,
 	}
 
 	// Add all the join LTimes
@@ -296,5 +309,9 @@ func (d *delegate) MergeRemoteState(buf []byte, isJoin bool) {
 			userEvent.Payload = e.Payload
 			d.serf.handleUserEvent(&userEvent)
 		}
+	}
+
+	if d.user != nil && pp.UserState != nil {
+		d.user.MergeRemoteState(pp.UserState, isJoin)
 	}
 }

@@ -17,7 +17,7 @@ func TestDelegate_NodeMeta_Old(t *testing.T) {
 	c := testConfig(t, ip1)
 	c.ProtocolVersion = 2
 	c.Tags["role"] = "test"
-	d := &delegate{&Serf{config: c}}
+	d := &delegate{serf: &Serf{config: c}}
 	meta := d.NodeMeta(32)
 
 	if !reflect.DeepEqual(meta, []byte("test")) {
@@ -44,7 +44,7 @@ func TestDelegate_NodeMeta_New(t *testing.T) {
 	c := testConfig(t, ip1)
 	c.ProtocolVersion = 3
 	c.Tags["role"] = "test"
-	d := &delegate{&Serf{config: c}}
+	d := &delegate{serf: &Serf{config: c}}
 	meta := d.NodeMeta(32)
 
 	out := d.serf.decodeTags(meta)
@@ -234,7 +234,7 @@ func TestDelegate_BadData(t *testing.T) {
 	c := testConfig(t, ip1)
 	c.ProtocolVersion = 3
 	c.Tags["role"] = "test"
-	d := &delegate{&Serf{config: c}}
+	d := &delegate{serf: &Serf{config: c}}
 	meta := d.NodeMeta(32)
 
 	out := d.serf.decodeTags(meta)

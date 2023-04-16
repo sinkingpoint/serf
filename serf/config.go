@@ -269,6 +269,11 @@ type Config struct {
 
 	// MetricLabels is a map of optional labels to apply to all metrics emitted.
 	MetricLabels []metrics.Label
+
+	// UserDelegate is an optional delegate that can be used to send full configurations as part
+	// of memberlist's push/pull protocol. This is useful for sending configuration data to new
+	// nodes joining the cluster.
+	UserDelegate UserDelegate
 }
 
 // Init allocates the subdata structures
